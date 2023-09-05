@@ -1,11 +1,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { providers } from "@massalabs/wallet-provider"; // WALLET-PROVIDER
-import { ClientFactory, Args } from "@massalabs/massa-web3";
+import { ClientFactory, Args, fromMAS } from "@massalabs/massa-web3";
 import { toast } from "react-toastify";
 
 function App() {
   const race_contract = "AS1rhYAVDB586HJrPEozSghH9ra8ZYM7WwxFrLGRdJALPaTs8hjt";
+  const collection_contract =
+    "AS14GWghYbMKjsHanReuGHgyaVoLmNiox6Q6zd6YbpAnDsJzPwHC";
 
   const getWallet = async (walletName) => {
     const wallets = await providers();
@@ -48,6 +50,33 @@ function App() {
       });
   };
 
+  const handleMintCar = async () => {
+    const bearbyWallet = await getWallet("BEARBY");
+    const selectedAccount = await bearbyWallet.accounts();
+    const currentAccount = selectedAccount[0];
+    const massaClient = await ClientFactory.fromWalletProvider(
+      bearbyWallet,
+      currentAccount
+    );
+
+    await massaClient
+      .smartContracts()
+      .callSmartContract({
+        fee: BigInt(1000),
+        maxGas: BigInt(1000000),
+        coins: fromMAS(10),
+        targetAddress: collection_contract,
+        functionName: "nft1_mint",
+        parameter: new Args().addString(currentAccount.address()),
+      })
+      .then((tx) => {
+        console.log(tx);
+      })
+      .catch((e) => {
+        console.log(e);
+      });
+  };
+
   return (
     <>
       <div className="w-3/5">
@@ -56,6 +85,12 @@ function App() {
           className="mt-4 w-full my-2 rounded-md bg-gray-800 px-5 py-2.5 text-base font-bold text-white hover:text-white"
         >
           join the first lobby
+        </button>
+        <button
+          onClick={handleMintCar}
+          className="mt-4 w-full my-2 rounded-md bg-gray-800 px-5 py-2.5 text-base font-bold text-white hover:text-white"
+        >
+          mint car
         </button>
       </div>
     </>
